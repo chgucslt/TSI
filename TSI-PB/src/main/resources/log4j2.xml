@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- 启用热加载日志配置，监控间隔为30秒 -->
+<Configuration status="WARN" monitorInterval="30">
+
+    <Properties>
+        <Property name="LOG_HOME">./logs</Property>
+        <Property name="PROJECT_NAME">tls-scanner</Property>
+        <Property name="LOG_PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36}:%L - %msg%n</Property>
+    </Properties>
+
+    <Appenders>
+
+        <!-- 控制台输出 -->
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+        </Console>
+
+        <RollingFile name="RollingFileInfo" fileName="${LOG_HOME}/${PROJECT_NAME}-info.log"
+                     filePattern="${LOG_HOME}/%d{yyyy-MM-dd}/info-%d{yyyy-MM-dd}-%i.log.gz">
+                <!-- 接收INFO及以上级别的日志 -->
+                <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
+                <PatternLayout pattern="${LOG_PATTERN}"/>
+                <Policies>
+                        <!-- 每天切分日志文件 -->
+                        <TimeBasedTriggeringPolicy modulate="true" interval="1"/>
+                        <!-- 当日志文件达到100MB时，也会切分 -->
+                        <SizeBasedTriggeringPolicy size="100 MB"/>
+                </Policies>
+                <DefaultRolloverStrategy max="20">
+                        <Delete basePath="${LOG_HOME}" maxDepth="2">
+                                <IfFileName glob="*/info-*.log.gz"/>
+                                <!-- 自动扫描并删除30天前的日志文件 -->
+                                <IfLastModified age="30d"/>
+                        </Delete>
+                </DefaultRolloverStrategy>
+        </RollingFile>
+
+        <RollingFile name="RollingFileError" fileName="${LOG_HOME}/${PROJECT_NAME}-error.log"
+                     filePattern="${LOG_HOME}/%d{yyyy-MM-dd}/error-%d{yyyy-MM-dd}-%i.log.gz">
+                <!-- 只接收ERROR级别的日志 -->
+                <ThresholdFilter level="ERROR" onMatch="ACCEPT" onMismatch="DENY"/>
+                <PatternLayout pattern="${LOG_PATTERN}"/>
+                <Policies>
+                        <TimeBasedTriggeringPolicy modulate="true" interval="1"/>
+                        <SizeBasedTriggeringPolicy size="100 MB"/>
+                </Policies>
+                <DefaultRolloverStrategy max="20">
+                        <Delete basePath="${LOG_HOME}" maxDepth="2">
+                                <IfFileName glob="*/error-*.log.gz"/>
+                                <IfLastModified age="30d"/>
+                        </Delete>
+                </DefaultRolloverStrategy>
+        </RollingFile>
+
+    </Appenders>
+
+    <Loggers>
+        <!-- 根日志级别 -->
+        <Root level="DEBUG">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="RollingFileInfo"/>
+            <AppenderRef ref="RollingFileError"/>
+        </Root>
+
+        <!-- 将TLS-Attacker相关日志设置为WARN级别，减少日志输出量 -->
+        <Logger name="de.rub.nds.tlsattacker" level="WARN" additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="RollingFileInfo"/>
+            <AppenderRef ref="RollingFileError"/>
+        </Logger>
+    </Loggers>
+
+</Configuration>
