@@ -2,6 +2,13 @@
   <img src="assets/logo.png" alt="TSI Logo" width="180" />
 </p>
 
+<p align="center">
+  <img src="https://img.shields.io/badge/Java-11+-orange?logo=openjdk&logoColor=white" alt="Java 11+" />
+  <img src="https://img.shields.io/badge/build-Maven-C71A36?logo=apachemaven&logoColor=white" alt="Maven" />
+  <img src="https://img.shields.io/badge/license-MIT-blue" alt="License: MIT" />
+  <img src="https://img.shields.io/badge/DOI-pending-lightgrey" alt="DOI: pending" />
+</p>
+
 # TSI — TLS Server Identifier
 
 **TSI** (**T**LS **S**erver **I**dentifier) is a Java-based framework that can identify the type and version 
