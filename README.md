@@ -1,10 +1,10 @@
 <p align="center">
-  <img src="assets/logo.svg" alt="TSI Logo" width="180" />
+  <img src="assets/logo.png" alt="TSI Logo" width="180" />
 </p>
 
 # TSI — TLS Server Identifier
 
-TSI (TLS Server Identifier) is a Java-based framework that can identify the type and version 
+**TSI** (**T**LS **S**erver **I**dentifier) is a Java-based framework that can identify the type and version 
 of TLS server implementations. For example, it can determine whether a website's server is 
 using the OpenSSL-1.1.1x library. Additionally, by integrating publicly available CVE (Common 
 Vulnerabilities and Exposures) information, TSI assists pentesters in analyzing the security 
