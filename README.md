@@ -1,170 +1,131 @@
-# TSI (TLS Server Identifier)
+<p align="center">
+  <img src="assets/logo.svg" alt="TSI Logo" width="180" />
+</p>
 
-TSI-Prober is a Java-based framework that can identify the type and version of TLS server implementations. For example, it can determine whether a website's server is using the OpenSSL-1.1.1x library. Additionally, by integrating publicly available CVE (Common Vulnerabilities and Exposures) information, TSI-Prober assists pentesters in analyzing the security risks of TLS services.
+# TSI — TLS Server Identifier
 
-## Requirement
+TSI (TLS Server Identifier) is a Java-based framework that can identify the type and version 
+of TLS server implementations. For example, it can determine whether a website's server is 
+using the OpenSSL-1.1.1x library. Additionally, by integrating publicly available CVE (Common 
+Vulnerabilities and Exposures) information, TSI assists pentesters in analyzing the security 
+risks of TLS services.
 
-* Java 11+
-* Maven 3.6.3 or later
+## Prerequisites
 
-## Building
+- Java 11+
+- Maven 3.6+
 
-```shell
+## Build
+
+```bash
 mvn clean package
 ```
 
+This produces an executable uber-JAR via `maven-shade-plugin`.
+
 ## Usage
 
-To perform identification on a specific TLS server, the following command can be used:
-
-```shell
-java -jar ./target/TSI-Prober-1.0-SNAPSHOT.jar --address <ip> --port <port>
+```bash
+java -jar TSI-PB/target/TSI-PB-1.0-SNAPSHOT.jar <TARGET...> [OPTIONS]
 ```
 
-For example,
+### Arguments
 
-```shell
-java -jar ./target/TSI-Prober-1.0-SNAPSHOT.jar --address example.com --port 443
+| Argument | Description |
+|----------|-------------|
+| `TARGET` | One or more targets in `ip:port` format (e.g., `192.168.0.10:443`) |
+
+### Options
+
+| Option | Description |
+|--------|-------------|
+| `--config <file>` | Path to a custom configuration file (overrides defaults) |
+| `--help` | Show usage information |
+| `--version` | Print version |
+
+### Examples
+
+Scan a single server:
+
+```bash
+java -jar TSI-PB/target/TSI-PB-1.0-SNAPSHOT.jar 192.168.0.10:443
 ```
 
-To conduct batch identification on multiple TLS servers, the following command can be utilized:
+Scan multiple servers (triggers homogeneity analysis):
 
-```shell
-java -jar ./target/TSI-Prober-1.0-SNAPSHOT.jar --domainFile domains.csv
+```bash
+java -jar TSI-PB/target/TSI-PB-1.0-SNAPSHOT.jar 10.0.0.1:443 10.0.0.2:443 10.0.0.3:443
 ```
 
-The *domains.csv* file contains a single column, with each row listing a domain. For example,
+Use a custom configuration:
 
-```text
-example1.com
-example2.com
-example3.com
+```bash
+java -jar TSI-PB/target/TSI-PB-1.0-SNAPSHOT.jar --config my-config.properties 10.0.0.1:443
 ```
 
-Help information can also be viewed to provide custom inputs.
+## Configuration
 
-```shell
-java -jar ./target/TSI-Prober-1.0-SNAPSHOT.jar --help
-usage: TSI-Prober --address=[IP] --port=[PORT] ...
-    --address <ip>                  (required) the IP address of the
-                                    target to be identified
-    --config <file>                 use a customized configuration file
-    --cve                           scan potential known vulnerabilities
-    --domainFile <file>             if you want to identify domains in
-                                    batch, write domains in a csv file
- -h,--help                          print the help message
-    --interval <time>               set the time interval between probes
-    --out <filename>                specify the name of the output file
-    --port <port>                   (required) the port of the target to
-                                    be identified
-    --probe <file>                  use a customized probe file
-    --responseMatchDB <directory>   use a customized TLS behaviors
-                                    database
+Default settings are in `src/main/resources/config.properties`. Key parameters:
 
-```
-
-By enabling the **--cve** option, users can quickly scan for potential CVE vulnerabilities in the website under test.
-
-**Note:** *To activate the vulnerability scanning feature, it is necessary to first build a Neo4j database using the Excel files in the TLS CVE Dataset. Then, set the URL, Username, and Password for the Neo4j database in config.properties. Finally, execute the following command:*
-
-```shell
-java -jar ./target/TSI-Prober-1.0-SNAPSHOT.jar --address example.com --port 443 --config config.properties --cve
-```
+| Property | Default | Description |
+|----------|---------|-------------|
+| `network.socket.timeout` | 1000 | Socket timeout in milliseconds |
+| `network.socket.interval` | 2000 | Delay between probes in milliseconds |
+| `fingerprint.similarity.threshold` | 0.9 | Minimum similarity score for version matching (0.0–1.0) |
 
 ## Output
 
-By default, TSI-Prober outputs two files in the output folder:
+Results are written to the `output/` directory (configurable):
 
-1. example.json
-2. examlpe.txt
+- **`<scanId>_fingerprint_<ip>_<port>.json`** — Per-target scan report containing the extracted fingerprint, matched versions with similarity scores, and associated CVEs.
+- **`<scanId>_homogeneity.json`** — Homogeneity report with pairwise similarity scores and overall homogeneity value (generated when multiple targets are scanned).
 
-The *example.json* file contains the response messages of *example.com* to all probes; The *example.txt* file includes the top one hundred TLS versions most similar to the TLS behavior used by *example.com*. 
+## Datasets
 
-If the **--cve** option is enabled and there is a TLS similarity to *example.com* greater than a specific threshold (default is 50), an additional file, *example.security.txt*, will be generated. This file indicates the potential CVEs present in *example.com*.
+| Dataset | Description | Location |
+|---------|-------------|----------|
+| TLS CVE Dataset | SQLite database mapping TLS library versions to known CVEs | [`src/main/resources/cves.sqlite`](TSI-PB/src/main/resources/cves.sqlite) |
+| TLS Server Dataset | Docker images of TLS servers across multiple library versions, used to build the reference fingerprint database | [Docker Hub: identifytls/tls_docker_images](https://hub.docker.com/r/identifytls/tls_docker_images) |
 
-### example.json
+## Project Structure
 
-```json
-{
-  "ALERT,ALERT,ALERT":[
-		"-",
-		"x"
-	],
-	"CCS,CCS,CCS":[
-		"-",
-		"x"
-	],
-	"CH,CH,CCS":[
-		"SERVER_HELLO|CERTIFICATE|SERVER_HELLO_DONE",
-		"ALERT_FATAL_UNEXPECTED_MESSAGE|x"
-	],
-	"CH,FIN":[
-		"SERVER_HELLO|CERTIFICATE|SERVER_HELLO_DONE",
-		"ALERT_FATAL_UNEXPECTED_MESSAGE|x"
-	],
-	"CH,CCS":[
-		"SERVER_HELLO|CERTIFICATE|SERVER_HELLO_DONE",
-		"ALERT_FATAL_UNEXPECTED_MESSAGE|x"
-	],
-  ......
-}
+```
+TSI-PB/
+├── src/main/java/org/example/tlsscanner/
+│   ├── App.java                          # CLI entry point (picocli)
+│   ├── api/                              # Scanner abstractions
+│   │   ├── GenericScanner.java           # Base scanner with target iteration
+│   │   ├── ExternalScanner.java          # Base for external-tool-based scanners
+│   │   ├── FingerprintComparator.java    # Similarity comparison interface
+│   │   └── datastructures/
+│   │       └── Fingerprint.java          # Generic fingerprint container
+│   ├── tsi/                              # TSI implementation
+│   │   ├── TSIScanner.java               # Core scanning logic
+│   │   ├── analyzer/
+│   │   │   ├── TSIFingerprintComparator.java  # Set-intersection similarity
+│   │   │   ├── VersionIdentifier.java         # Fingerprint-to-version matching
+│   │   │   ├── VulnerabilityIdentifier.java   # CVE lookup via SQLite
+│   │   │   └── HomogeneityCalculator.java     # Pairwise homogeneity scoring
+│   │   ├── datastructures/               # TSI-specific data types
+│   │   └── network/                      # TLS connection and symbolization
+│   ├── config/
+│   │   └── ConfigurationManager.java     # Configuration loading
+│   └── common/                           # Shared utilities
+└── src/main/resources/
+    ├── config.properties                 # Default configuration
+    ├── probes.txt                        # Probe sequence definitions
+    ├── fingerprints/                     # Reference fingerprint database (JSON)
+    ├── messages/                         # TLS-Attacker XML message templates
+    └── cves.sqlite                       # CVE database
 ```
 
-### example.txt
+## Dependencies
 
-```text
-    isEmptyCertAcceptable           true
-                cost time           76162
-           openssl-1.0.2o           57
-           ......
-           openssl-1.0.2c           56
-           ......
-           openssl-1.0.1p           54
-           ......
-           openssl-1.0.1i           53
-           ......
-           openssl-1.1.0b           52
-           ......
-           openssl-1.1.1d           51
-           ......
-           openssl-1.1.1q           50
-           ......
-           openssl-1.0.0p           46
-           ......
-           openssl-1.0.0o           45
-           ......
-           openssl-1.0.0c           44
-           ......
-```
+- [TLS-Attacker](https://github.com/tls-attacker/TLS-Attacker) — TLS protocol message construction and transport
+- [picocli](https://picocli.info/) — Command-line argument parsing
+- [Jackson](https://github.com/FasterXML/jackson) — JSON serialization
+- [SQLite JDBC](https://github.com/xerial/sqlite-jdbc) — CVE database access
 
-### example.security.txt
-```text
-              example.com           13           OPENSSL-1.0.2o, OPENSSL-1.0.2n, ......
-------------------------------------------------------------
-           CVE-2021-23839           13           all
-            CVE-2022-0778           13           all
-            CVE-2020-1968           13           all
-            CVE-2021-4160           13           all
-            CVE-2020-1971           13           all
-            CVE-2021-3712           13           all
-           CVE-2021-23841           13           all
-            CVE-2019-1551           11           OPENSSL-1.0.2p, OPENSSL-1.0.2s, ......
-            CVE-2019-1563           11           OPENSSL-1.0.2s, OPENSSL-1.0.2q, ......
-            CVE-2019-1552           11           OPENSSL-1.0.2p, OPENSSL-1.0.2i, ......
-            CVE-2019-1547           11           OPENSSL-1.0.2s, OPENSSL-1.0.2n, ......
-            CVE-2018-0734            8           OPENSSL-1.0.2i, OPENSSL-1.0.2p, ......
-            CVE-2018-0737            7           OPENSSL-1.0.2n, OPENSSL-1.0.2o, ......
-            CVE-2018-0732            7           OPENSSL-1.0.2n, OPENSSL-1.0.2j, ......
-            CVE-2018-0739            6           OPENSSL-1.0.2k, OPENSSL-1.0.2m, ......
-            CVE-2017-3736            5           OPENSSL-1.0.2j, OPENSSL-1.0.2l, ......
-            CVE-2017-3735            5           OPENSSL-1.0.2i, OPENSSL-1.0.2j, ......
-            CVE-2017-3738            5           OPENSSL-1.0.2m, OPENSSL-1.0.2j, ......
-            CVE-2017-3737            5           OPENSSL-1.0.2i, OPENSSL-1.0.2j, ......
-            CVE-2017-3732            3           OPENSSL-1.0.2i, OPENSSL-1.0.2j, OPENSSL-1.0.2k
-            CVE-2017-3731            2           OPENSSL-1.0.2j, OPENSSL-1.0.2i
-            CVE-2016-7055            2           OPENSSL-1.0.2i, OPENSSL-1.0.2j
-            CVE-2016-7052            1           OPENSSL-1.0.2i
-```
+## License
 
-
-
+See [LICENSE](LICENSE) for details.
