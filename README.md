@@ -82,10 +82,10 @@ Results are written to the `output/` directory (configurable):
 
 ## Datasets
 
-| Dataset | Description | Location |
-|---------|-------------|----------|
-| TLS CVE Dataset | SQLite database mapping TLS library versions to known CVEs | [`src/main/resources/cves.sqlite`](TSI-PB/src/main/resources/cves.sqlite) |
-| TLS Server Dataset | Docker images of TLS servers across multiple library versions, used to build the reference fingerprint database | [Docker Hub: identifytls/tls_docker_images](https://hub.docker.com/r/identifytls/tls_docker_images) |
+| Dataset | Description                                                                                 | Location |
+|---------|---------------------------------------------------------------------------------------------|----------|
+| TLS CVE Dataset | SQLite database mapping TLS library versions to known CVEs                                  | [`src/main/resources/cves.sqlite`](TSI-PB/src/main/resources/cves.sqlite) |
+| TLS Server Dataset | Docker images of TLS servers across multiple library versions, used to learn Mealy machines | [Docker Hub: identifytls/tls_docker_images](https://hub.docker.com/r/identifytls/tls_docker_images) |
 
 ## Project Structure
 
